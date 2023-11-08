@@ -73,16 +73,24 @@ async fn handle(
     if provided_mime_type.subtype().to_string() == "svg" {
         return Ok(Redirect::temporary(&ctx.url).into_response());
     }
+
     // download imgage
     let bytes = fetch_data(&ctx.url).await.map_err(|e| e.to_http_error())?;
 
     // determine image format
-    let fetched_format = guess_format(&bytes).map_err(|_| {
-        (
+    let mut fetched_format = guess_format(&bytes).ok();
+    if fetched_format.is_none() {
+        fetched_format = ImageFormat::from_mime_type(provided_mime_type)
+    }
+
+    if fetched_format.is_none() {
+        return Err((
             StatusCode::INTERNAL_SERVER_ERROR,
             "Unable to determine Image format".to_string(),
-        )
-    })?;
+        ));
+    }
+
+    let fetched_format = fetched_format.unwrap();
 
     // decode image
     let mut decoder = Reader::new(Cursor::new(&bytes));

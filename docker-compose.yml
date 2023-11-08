@@ -6,5 +6,5 @@ services:
       - 3080:3080
     environment:
       - DOMAINS=https://jmp.blue
-      - MODE=whitelist
+      - MODE=blacklist
     restart: on-failure
